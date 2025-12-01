@@ -14,6 +14,7 @@ class RagAgent:
                 persist_directory="./rag-agent-sigmoide/chroma_db", 
                 embedding_function=embeddings
             )
+
             self.retriever = self.vector_store.as_retriever()
             print("ChromaDB loaded.")
 
@@ -21,25 +22,32 @@ class RagAgent:
             print("ChromaDB not found. Creat a new database")
             self.database()
 
-
     def database(self):
-        from pypdf import PdfReader
+        from bs4 import BeautifulSoup
+        import os
         import re
 
-        complet_text: list[str] = []
+        complete_text: list = []
+        root_directory = "."
 
-        for i in range (1,9):
-            reader = PdfReader(f"debate/debate-{i}.pdf")
-            page = reader.pages[0]
-            text = page.extract_text()
-            text = re.sub(r'\bC  ∫  Σ\b', "", text)
-            text = re.sub(r'^\s*$\n', "", text, flags=re.MULTILINE)
+        for current_path, _, files in os.walk(root_directory):
+            for filename in files:
+                if filename.lower().endswith(".svg"):
+                    complet_path = os.path.join(current_path, filename)        
+                    content_svg = ""
+                try:
+                    with open(complet_path, "r", encoding="utf-8") as f:
+                        content_svg = f.read()
+                    soup = BeautifulSoup(content_svg, "xml")
 
-            while re.search(r'(\w) (\w)', text):
-                text = re.sub(r'(\w) (\w)', r'\1\2', text)
+                    text_elements = soup.find_all("text")
+                    for text_element in text_elements:
+                        text = text_element.get_text()
+                        text = re.sub(r'^\s*$\n', "", text, flags=re.MULTILINE)
+                        complete_text.append(text)
 
-            complet_text.append(text)
-
+                except Exception as e:
+                    print(f"error when reading {complet_path}: {e}")
 
         from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -49,7 +57,7 @@ class RagAgent:
             separators=["\n\n", "\n", " ", ""],
         )
 
-        chunks = text_splitter.create_documents(complet_text)
+        chunks = text_splitter.create_documents(complete_text)
 
         from langchain_huggingface import HuggingFaceEmbeddings
         from langchain_chroma import Chroma
@@ -69,7 +77,7 @@ class RagAgent:
 
         self.retriever = vector_store.as_retriever()
 
-    def question_and_answer(self, query: str, choice: int) -> print:
+    def question_and_answer(self, choice: int, query: str) -> print:
         from langchain_core.prompts import ChatPromptTemplate
         from langchain_classic.chains import create_retrieval_chain
         from langchain_classic.chains.combine_documents import create_stuff_documents_chain
@@ -84,16 +92,16 @@ class RagAgent:
                 from langchain_ollama import OllamaLLM
                 llm = OllamaLLM(model="llama3")
             case _:
-                return print("Escolha de modelo inválido")
+                return print("invalid model selection")
 
         prompt = ChatPromptTemplate.from_template("""
         You are a helpful assistant. Use the following context to answer the question.
         If you don't know the answer, say that you don't have enough information in the context.
 
-        Contexto:
+        Context:
         {context}
 
-        Pergunta: {input}
+        Asking: {input}
         """)
 
         document_chain = create_stuff_documents_chain(
@@ -123,4 +131,4 @@ Type your Question: """)
 
     agent = RagAgent()
 
-    agent.question_and_answer(query=question, choice=selection)
+    agent.question_and_answer(choice=selection, query=question)

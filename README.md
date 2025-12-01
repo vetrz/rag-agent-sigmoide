@@ -120,7 +120,7 @@ Run the agent script using Python:
 ```
 Bash
 
-python main.py
+uv run main.py
 ```
 
 The script will initialize the RAG process using the documents specific to the "Chapa Sigmoide" and allow you to interact with the LLM.

@@ -1,11 +1,12 @@
 [project]
 name = "agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "Agent based in architecture Retrieval-Augmented Generation (RAG) for Questions and Answers about chapa Sigmóide"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "anthropic-admin>=0.1.0",
+    "bs4>=0.0.2",
     "langchain>=1.1.0",
     "langchain-anthropic>=1.2.0",
     "langchain-chroma>=1.0.0",
@@ -14,6 +15,7 @@ dependencies = [
     "langchain-huggingface>=1.1.0",
     "langchain-ollama>=1.0.0",
     "langchain-text-splitters>=1.0.0",
+    "lxml>=6.0.2",
     "pydantic>=2.12.5",
     "pypdf>=6.4.0",
 ]
