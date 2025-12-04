@@ -18,4 +18,5 @@ dependencies = [
     "lxml>=6.0.2",
     "pydantic>=2.12.5",
     "pypdf>=6.4.0",
+    "sentence-transformers>=5.1.2",
 ]

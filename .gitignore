@@ -9,3 +9,7 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# Files Test
+notebooks/test.ipynb
+utils/test.py

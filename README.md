@@ -1,6 +1,6 @@
 # Chapa Sigmoide RAG Agent
 
-This repository hosts a Retrieval-Augmented Generation (RAG) agent designed to answer questions and provide information about the "Chapa Sigmoide" electoral slate.
+This repository hosts a Retrieval-Augmented Generation (RAG) agent designed to answer questions and provide information about the Legacy of "Chapa Sigmoide" electoral slate.
 
 ## How to Use
 
