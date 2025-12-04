@@ -1,9 +1,17 @@
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_chroma import Chroma
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+
+from .utils.extract_text import extract_text_from_svg
+
 class RagAgent:
     def __init__(self):
         try:
-            from langchain_huggingface import HuggingFaceEmbeddings
-            from langchain_chroma import Chroma
-
             model_name = "sentence-transformers/all-MiniLM-L6-v2"
             embeddings = HuggingFaceEmbeddings(
                 model_name=model_name,
@@ -11,7 +19,7 @@ class RagAgent:
             )
 
             self.vector_store = Chroma(
-                persist_directory="./chroma_db", 
+                persist_directory="./data/chroma_db", 
                 embedding_function=embeddings
             )
 
@@ -22,14 +30,8 @@ class RagAgent:
             print("ChromaDB not found. Creat a new database")
             self.database()
 
-    def database(self):
-        from langchain_text_splitters import RecursiveCharacterTextSplitter
-        from langchain_huggingface import HuggingFaceEmbeddings
-        from langchain_chroma import Chroma
-
-        from utils.extract_text import extract_text_from_svg
-        
-        complete_text = extract_text_from_svg()
+    def database(self):        
+        data_text = extract_text_from_svg(directory="/data/raw")
 
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=300,
@@ -37,7 +39,7 @@ class RagAgent:
             separators=["\n\n", "\n", " ", ""],
         )
 
-        chunks = text_splitter.create_documents(complete_text)
+        chunks = text_splitter.create_documents(data_text)
 
         model_name = "sentence-transformers/all-MiniLM-L6-v2"
 
@@ -49,24 +51,24 @@ class RagAgent:
         vector_store = Chroma.from_documents(
             documents=chunks, 
             embedding=embeddings,
-            persist_directory="./chroma_db"
+            persist_directory="./data/chroma_db"
         )
 
         self.retriever = vector_store.as_retriever()
 
     def question_and_answer(self, choice: int, query: str) -> print:
-        from langchain_core.prompts import ChatPromptTemplate
-        from langchain_classic.chains import create_retrieval_chain
-        from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-        
         match choice:
             case 1:
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 from dotenv import load_dotenv
+                import os
+
                 load_dotenv()
-                llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+                llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash",
+                                             google_api_key=os.getenv("GEMINI_API_KEY"))
             case 2:
                 from langchain_ollama import OllamaLLM
+
                 llm = OllamaLLM(model="llama3")
             case _:
                 return print("invalid model selection")

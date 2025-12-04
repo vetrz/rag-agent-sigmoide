@@ -10,15 +10,14 @@ def cleaned_text(text: str) -> str:
 
     return text
 
-def extract_text_from_svg() -> list:
+def extract_text_from_svg(directory:str) -> list:
     index_data: int = next((i for i, path in enumerate(sys.path) if path.endswith('/agent')))
     complete_text: str = ""
-    data_directory: str = sys.path[index_data]+"/data"
+    data_directory: str = sys.path[index_data]+directory
 
     for current_path, _, files in os.walk(data_directory):
         for filename in files:
-            if filename.lower().endswith(".svg"):
-                if complete_text != "": complete_text += "\n"
+            if filename.lower().endswith(".svg"): 
                 complet_path = os.path.join(current_path, filename) 
                 content_svg = ""
                 try:
@@ -31,6 +30,7 @@ def extract_text_from_svg() -> list:
                         text = text_element.get_text()
                         text = cleaned_text(text)
                         complete_text += text + " "
+                    complete_text += "\n"
 
                 except Exception as e:
                         print(f"error when reading {complet_path}: {e}")  

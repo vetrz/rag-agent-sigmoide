@@ -115,12 +115,13 @@ Once you've configured your chosen LLM option and installed dependencies, run th
 
 Execute the Code
 
-Run the agent script using Python:
+Run the agent script using uv Python:
 
 ```
 Bash
 
-uv run main.py
+uv run -m rag_agent.main
+
 ```
 
 The script will initialize the RAG process using the documents specific to the "Chapa Sigmoide" and allow you to interact with the LLM.
