@@ -7,10 +7,11 @@ def cleaned_text(text: str) -> str:
     text = re.sub(r'C ∫ Σ', "", text)
     text = re.sub(r'>>>', "", text)
     text = re.sub(r'\s+', " ", text)
+    text = re.sub(r'\s-\s', "", text)
 
     return text
 
-def extract_text_from_svg(directory:str) -> list:
+def extract_text_from_svg(directory:str) -> str:
     index_data: int = next((i for i, path in enumerate(sys.path) if path.endswith('/agent')))
     complete_text: str = ""
     data_directory: str = sys.path[index_data]+directory

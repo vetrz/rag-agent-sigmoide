@@ -1,42 +1,52 @@
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
-
-from .utils.extract_text import extract_text_from_svg
+import os
 
 class RagAgent:
     def __init__(self):
-        try:
-            model_name = "sentence-transformers/all-MiniLM-L6-v2"
-            embeddings = HuggingFaceEmbeddings(
-                model_name=model_name,
-                model_kwargs={"device":"cpu"}
-            )
+        model_name = "sentence-transformers/all-MiniLM-L6-v2"
+        embeddings = HuggingFaceEmbeddings(
+            model_name=model_name,
+            model_kwargs={"device":"cpu"}
+        )
 
+        db_path = ".data/chroma_db"
+
+        db_exists = (
+            os.path.exists(db_path) and
+            os.path.exists(os.path.join(db_path),"chroma.sqlite3")
+        )
+
+        if db_exists:
             self.vector_store = Chroma(
-                persist_directory="./data/chroma_db", 
+                persist_directory=db_path,
                 embedding_function=embeddings
             )
 
-            self.retriever = self.vector_store.as_retriever()
+            self.retriever = self.vector_store.as_retriever(
+                search_type="similarity",
+                search_kwargs={"k":2}
+            )
+
             print("ChromaDB loaded.")
 
-        except Exception:
+        else:
             print("ChromaDB not found. Creat a new database")
             self.database()
 
     def database(self):        
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+        from .utils.extract_text import extract_text_from_svg
+
         data_text = extract_text_from_svg(directory="/data/raw")
 
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=300,
             chunk_overlap=10,
-            separators=["\n\n", "\n", " ", ""],
+            separators=["\n"],
         )
 
         chunks = text_splitter.create_documents(data_text)
@@ -54,14 +64,16 @@ class RagAgent:
             persist_directory="./data/chroma_db"
         )
 
-        self.retriever = vector_store.as_retriever()
+        self.retriever = vector_store.as_retriever(
+            search_type="similarity",
+            search_kwargs={"k":2}
+        )
 
     def question_and_answer(self, choice: int, query: str) -> print:
         match choice:
             case 1:
                 from langchain_google_genai import ChatGoogleGenerativeAI
                 from dotenv import load_dotenv
-                import os
 
                 load_dotenv()
                 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash",
